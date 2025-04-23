@@ -30,10 +30,15 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import DownloadIcon from '@mui/icons-material/Download';
+import CodeIcon from '@mui/icons-material/Code';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import apiClient from './services/api';
 import AIVideoInterface from './components/AIVideoInterface';
 import NaturalTextToSpeech from './components/NaturalTextToSpeech';
+import PlantUMLViewer from './components/PlantUMLViewer';
+import plantumlEncoder from 'plantuml-encoder';
 
 const getDesignTokens = (mode) => ({
   palette: {
@@ -374,6 +379,15 @@ function App() {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
+  const downloadDocument = (content, filename) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -616,58 +630,369 @@ function App() {
                     ) : (
                       <>
                         {documents.selectedDocType === 0 && (
-                          <Typography variant="body1" component="pre" sx={{ 
-                            whiteSpace: 'pre-wrap',
-                            fontFamily: 'monospace',
-                            fontSize: '0.9rem',
-                            lineHeight: 1.6
-                          }}>
-                            {documents.srs || 'No SRS document available'}
-                          </Typography>
+                          <Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle1" color="primary">
+                                Software Requirements Specification (SRS)
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => downloadDocument(documents.srs, 'SRS_Document.txt')}
+                                disabled={!documents.srs}
+                              >
+                                Download
+                              </Button>
+                            </Box>
+                            <Paper 
+                              elevation={0}
+                              sx={{ 
+                                p: 2,
+                                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'white',
+                                border: `1px solid ${theme.palette.divider}`,
+                                '& pre': {
+                                  margin: 0,
+                                  padding: 2,
+                                  borderRadius: 1,
+                                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.04)',
+                                }
+                              }}
+                            >
+                              <Typography 
+                                variant="body1" 
+                                component="pre" 
+                                sx={{ 
+                                  whiteSpace: 'pre-wrap',
+                                  fontFamily: '"Roboto Mono", monospace',
+                                  fontSize: '0.875rem',
+                                  lineHeight: 1.8,
+                                  '& h1, & h2, & h3, & h4': {
+                                    fontFamily: '"Inter", sans-serif',
+                                    fontWeight: 600,
+                                    marginTop: 2,
+                                    marginBottom: 1,
+                                  },
+                                  '& ul, & ol': {
+                                    paddingLeft: 3,
+                                    marginBottom: 2,
+                                  },
+                                  '& li': {
+                                    marginBottom: 1,
+                                  },
+                                  '& table': {
+                                    borderCollapse: 'collapse',
+                                    width: '100%',
+                                    marginBottom: 2,
+                                  },
+                                  '& th, & td': {
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    padding: 1,
+                                  }
+                                }}
+                              >
+                                {documents.srs || 'No SRS document available'}
+                              </Typography>
+                            </Paper>
+                          </Box>
                         )}
                         {documents.selectedDocType === 1 && (
-                          <Typography variant="body1" component="pre" sx={{ 
-                            whiteSpace: 'pre-wrap',
-                            fontFamily: 'monospace',
-                            fontSize: '0.9rem',
-                            lineHeight: 1.6
-                          }}>
-                            {documents.frd || 'No Functional Requirements document available'}
-                          </Typography>
+                          <Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle1" color="primary">
+                                Functional Requirements Document (FRD)
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => downloadDocument(documents.frd, 'FRD_Document.txt')}
+                                disabled={!documents.frd}
+                              >
+                                Download
+                              </Button>
+                            </Box>
+                            <Paper 
+                              elevation={0}
+                              sx={{ 
+                                p: 2,
+                                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'white',
+                                border: `1px solid ${theme.palette.divider}`,
+                                '& pre': {
+                                  margin: 0,
+                                  padding: 2,
+                                  borderRadius: 1,
+                                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.04)',
+                                }
+                              }}
+                            >
+                              <Typography 
+                                variant="body1" 
+                                component="pre" 
+                                sx={{ 
+                                  whiteSpace: 'pre-wrap',
+                                  fontFamily: '"Roboto Mono", monospace',
+                                  fontSize: '0.875rem',
+                                  lineHeight: 1.8,
+                                  '& h1, & h2, & h3, & h4': {
+                                    fontFamily: '"Inter", sans-serif',
+                                    fontWeight: 600,
+                                    marginTop: 2,
+                                    marginBottom: 1,
+                                  },
+                                  '& ul, & ol': {
+                                    paddingLeft: 3,
+                                    marginBottom: 2,
+                                  },
+                                  '& li': {
+                                    marginBottom: 1,
+                                  },
+                                  '& table': {
+                                    borderCollapse: 'collapse',
+                                    width: '100%',
+                                    marginBottom: 2,
+                                  },
+                                  '& th, & td': {
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    padding: 1,
+                                  }
+                                }}
+                              >
+                                {documents.frd || 'No Functional Requirements document available'}
+                              </Typography>
+                            </Paper>
+                          </Box>
                         )}
                         {documents.selectedDocType === 2 && (
-                          <Typography variant="body1" component="pre" sx={{ 
-                            whiteSpace: 'pre-wrap',
-                            fontFamily: 'monospace',
-                            fontSize: '0.9rem',
-                            lineHeight: 1.6
-                          }}>
-                            {documents.brd || 'No Business Requirements document available'}
-                          </Typography>
+                          <Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle1" color="primary">
+                                Business Requirements Document (BRD)
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<DownloadIcon />}
+                                onClick={() => downloadDocument(documents.brd, 'BRD_Document.txt')}
+                                disabled={!documents.brd}
+                              >
+                                Download
+                              </Button>
+                            </Box>
+                            <Paper 
+                              elevation={0}
+                              sx={{ 
+                                p: 2,
+                                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'white',
+                                border: `1px solid ${theme.palette.divider}`,
+                                '& pre': {
+                                  margin: 0,
+                                  padding: 2,
+                                  borderRadius: 1,
+                                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.04)',
+                                }
+                              }}
+                            >
+                              <Typography 
+                                variant="body1" 
+                                component="pre" 
+                                sx={{ 
+                                  whiteSpace: 'pre-wrap',
+                                  fontFamily: '"Roboto Mono", monospace',
+                                  fontSize: '0.875rem',
+                                  lineHeight: 1.8,
+                                  '& h1, & h2, & h3, & h4': {
+                                    fontFamily: '"Inter", sans-serif',
+                                    fontWeight: 600,
+                                    marginTop: 2,
+                                    marginBottom: 1,
+                                  },
+                                  '& ul, & ol': {
+                                    paddingLeft: 3,
+                                    marginBottom: 2,
+                                  },
+                                  '& li': {
+                                    marginBottom: 1,
+                                  },
+                                  '& table': {
+                                    borderCollapse: 'collapse',
+                                    width: '100%',
+                                    marginBottom: 2,
+                                  },
+                                  '& th, & td': {
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    padding: 1,
+                                  }
+                                }}
+                              >
+                                {documents.brd || 'No Business Requirements document available'}
+                              </Typography>
+                            </Paper>
+                          </Box>
                         )}
                         {documents.selectedDocType === 3 && (
                           <Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                              <Typography variant="subtitle1" color="primary">
+                                UML Diagrams
+                              </Typography>
+                              {documents.umlDiagrams && documents.umlDiagrams.length > 0 && (
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<DownloadIcon />}
+                                  onClick={() => downloadDocument(
+                                    documents.umlDiagrams.map(d => 
+                                      `${d.name}\n${'-'.repeat(d.name.length)}\n\nType: ${d.type}\n\nDescription:\n${d.description}\n\nPlantUML Code:\n${d.content}\n\n`
+                                    ).join('\n'),
+                                    'UML_Diagrams.txt'
+                                  )}
+                                >
+                                  Download All
+                                </Button>
+                              )}
+                            </Box>
                             {documents.umlDiagrams && documents.umlDiagrams.length > 0 ? (
                               documents.umlDiagrams.map((diagram, index) => (
-                                <Box key={index} sx={{ 
-                                  mb: 3,
-                                  p: 2,
-                                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'white',
-                                  borderRadius: 1,
-                                  border: `1px solid ${theme.palette.divider}`
-                                }}>
-                                  <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main }}>
-                                    {diagram.name}
-                                  </Typography>
-                                  <Typography variant="body1" component="pre" sx={{ 
-                                    whiteSpace: 'pre-wrap',
-                                    fontFamily: 'monospace',
-                                    fontSize: '0.9rem',
-                                    lineHeight: 1.6
-                                  }}>
-                                    {diagram.content}
-                                  </Typography>
-                                </Box>
+                                <Paper 
+                                  key={index} 
+                                  elevation={0}
+                                  sx={{ 
+                                    mb: 3,
+                                    p: 2,
+                                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'white',
+                                    border: `1px solid ${theme.palette.divider}`
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Box>
+                                      <Typography variant="h6" sx={{ color: theme.palette.primary.main }}>
+                                        {diagram.name}
+                                      </Typography>
+                                      <Typography variant="caption" color="textSecondary">
+                                        {diagram.type} diagram
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<DownloadIcon />}
+                                        onClick={() => downloadDocument(
+                                          `${diagram.name}\n${'-'.repeat(diagram.name.length)}\n\nType: ${diagram.type}\n\nDescription:\n${diagram.description}\n\nPlantUML Code:\n${diagram.content}`,
+                                          `${diagram.name.replace(/\s+/g, '_')}.txt`
+                                        )}
+                                      >
+                                        Download
+                                      </Button>
+                                    </Box>
+                                  </Box>
+                                  
+                                  <Box sx={{ mb: 2 }}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                      Description:
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ mb: 2 }}>
+                                      {diagram.description}
+                                    </Typography>
+                                  </Box>
+
+                                  <Tabs
+                                    value={diagram.activeTab || 0}
+                                    onChange={(e, newValue) => {
+                                      const updatedDiagrams = [...documents.umlDiagrams];
+                                      updatedDiagrams[index] = { ...diagram, activeTab: newValue };
+                                      setDocuments({ ...documents, umlDiagrams: updatedDiagrams });
+                                    }}
+                                    sx={{ mb: 2 }}
+                                  >
+                                    <Tab 
+                                      icon={<CodeIcon />} 
+                                      label="PlantUML Code" 
+                                      iconPosition="start"
+                                    />
+                                    <Tab 
+                                      icon={<VisibilityIcon />} 
+                                      label="Preview" 
+                                      iconPosition="start"
+                                    />
+                                  </Tabs>
+
+                                  {(!diagram.activeTab || diagram.activeTab === 0) ? (
+                                    <Box 
+                                      sx={{ 
+                                        p: 2, 
+                                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.04)',
+                                        borderRadius: 1,
+                                        overflow: 'auto'
+                                      }}
+                                    >
+                                      <Typography 
+                                        variant="body2" 
+                                        component="pre" 
+                                        sx={{ 
+                                          whiteSpace: 'pre-wrap',
+                                          fontFamily: '"Roboto Mono", monospace',
+                                          fontSize: '0.875rem',
+                                          lineHeight: 1.8,
+                                          m: 0
+                                        }}
+                                      >
+                                        {diagram.content}
+                                      </Typography>
+                                      <Button
+                                        variant="text"
+                                        size="small"
+                                        color="primary"
+                                        onClick={() => {
+                                          // Copy content to clipboard
+                                          navigator.clipboard.writeText(diagram.content);
+                                          // Show toast or some feedback (could be implemented with a snackbar)
+                                          console.log('PlantUML code copied to clipboard');
+                                          alert('PlantUML code copied to clipboard');
+                                        }}
+                                        sx={{ mt: 1 }}
+                                      >
+                                        Copy to Clipboard
+                                      </Button>
+                                    </Box>
+                                  ) : (
+                                    <Box sx={{ position: 'relative' }}>
+                                      <PlantUMLViewer 
+                                        content={diagram.content}
+                                        title={diagram.name}
+                                        darkMode={theme.palette.mode === 'dark'}
+                                      />
+                                      <Box 
+                                        sx={{ 
+                                          position: 'absolute', 
+                                          top: 0, 
+                                          right: 0,
+                                          p: 1
+                                        }}
+                                      >
+                                        <Button
+                                          variant="outlined"
+                                          size="small"
+                                          color="primary"
+                                          onClick={() => {
+                                            // Open diagram in new tab
+                                            try {
+                                              const encoded = plantumlEncoder.encode(diagram.content);
+                                              const url = `https://www.plantuml.com/plantuml/svg/${encoded}`;
+                                              window.open(url, '_blank');
+                                            } catch (err) {
+                                              console.error('Error opening diagram:', err);
+                                              alert('Could not open diagram in new tab. Please try copying the code and using an online PlantUML editor.');
+                                            }
+                                          }}
+                                        >
+                                          Open in New Tab
+                                        </Button>
+                                      </Box>
+                                    </Box>
+                                  )}
+                                </Paper>
                               ))
                             ) : (
                               <Typography variant="body1" component="span" color="textSecondary" sx={{ py: 2, textAlign: 'center' }}>
@@ -890,22 +1215,22 @@ function App() {
                           },
                         }}
                       >
-                        <ListItemText
-                          primary={member.name}
-                          secondary={
-                            <Box sx={{ mt: 1 }}>
-                              {member.skills.map((skill) => (
-                                <Chip 
-                                  key={skill} 
-                                  label={skill} 
-                                  size="small" 
-                                  variant="outlined"
-                                  sx={{ mr: 0.5, mb: 0.5 }} 
-                                />
-                              ))}
-                            </Box>
-                          }
-                        />
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="subtitle1">
+                            {member.name}
+                          </Typography>
+                          <Box sx={{ mt: 1 }}>
+                            {member.skills.map((skill) => (
+                              <Chip 
+                                key={skill} 
+                                label={skill} 
+                                size="small" 
+                                variant="outlined"
+                                sx={{ mr: 0.5, mb: 0.5 }} 
+                              />
+                            ))}
+                          </Box>
+                        </Box>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
                             size="small"

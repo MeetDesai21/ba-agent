@@ -24,19 +24,142 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || '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',
 });
 
-// Document Generation Chain
+// Helper function to convert text description to PlantUML code
+function generatePlantUMLCode(description, type) {
+  // Basic template based on diagram type
+  let plantUMLCode = '';
+  
+  switch (type.toLowerCase()) {
+    case 'usecase':
+      plantUMLCode = `@startuml
+title ${description.split('\n')[0]}
+left to right direction
+skinparam packageStyle rectangle
+
+' Actors
+actor User
+actor Admin
+
+' Use Cases
+rectangle System {
+${description.split('\n').slice(1).map(line => {
+  if (line.trim().startsWith('-')) {
+    return `  usecase "${line.trim().substring(1).trim()}"`;
+  }
+  return line;
+}).join('\n')}
+}
+
+' Relationships
+User --> (Login)
+User --> (View Dashboard)
+Admin --> (Manage Users)
+Admin --> (Configure System)
+
+@enduml`;
+      break;
+      
+    case 'sequence':
+      plantUMLCode = `@startuml
+title ${description.split('\n')[0]}
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+participant User
+participant Frontend
+participant Backend
+participant Database
+
+${description.split('\n').slice(1).join('\n')}
+
+@enduml`;
+      break;
+      
+    case 'class':
+      plantUMLCode = `@startuml
+title ${description.split('\n')[0]}
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classArrowColor #2688d4
+skinparam classBackgroundColor WhiteSmoke
+skinparam classBorderColor #2688d4
+
+${description.split('\n').slice(1).join('\n')}
+
+@enduml`;
+      break;
+      
+    case 'activity':
+      plantUMLCode = `@startuml
+title ${description.split('\n')[0]}
+skinparam ActivityBackgroundColor WhiteSmoke
+skinparam ActivityBorderColor #2688d4
+skinparam ActivityDiamondBackgroundColor WhiteSmoke
+skinparam ActivityDiamondBorderColor #2688d4
+
+start
+${description.split('\n').slice(1).join('\n')}
+stop
+
+@enduml`;
+      break;
+      
+    case 'component':
+      plantUMLCode = `@startuml
+title ${description.split('\n')[0]}
+skinparam componentStyle uml2
+skinparam component {
+  BackgroundColor WhiteSmoke
+  BorderColor #2688d4
+  ArrowColor #2688d4
+}
+
+${description.split('\n').slice(1).join('\n')}
+
+@enduml`;
+      break;
+      
+    default:
+      plantUMLCode = `@startuml
+title ${description.split('\n')[0]}
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+${description.split('\n').slice(1).join('\n')}
+
+@enduml`;
+  }
+  
+  return plantUMLCode;
+}
+
+// Modify the document generation prompt to include better UML guidance
 const documentGenerationPrompt = PromptTemplate.fromTemplate(`
 You are an expert business analyst and technical writer. Based on the following business requirements, 
 create comprehensive documentation including:
 1. Software Requirements Specification (SRS)
 2. Functional Requirements Document (FRD)
 3. Business Requirements Document (BRD)
-4. UML Diagrams (described in text format that could be converted to diagrams)
+4. UML Diagrams (in PlantUML format)
+
+For UML diagrams, provide the following:
+1. Use Case Diagram showing system actors and their interactions
+2. Sequence Diagram showing the main user interactions and system flow
+3. Class Diagram showing the main entities and their relationships
+4. Activity Diagram showing the main business processes
+5. Component Diagram showing the system architecture
+
+For each diagram, follow these guidelines:
+- Use Case Diagrams: Define actors and their use cases with proper relationships (extends, includes)
+- Sequence Diagrams: Show message flows between actors, frontend, backend, and database
+- Class Diagrams: Include proper class definitions with attributes, methods, and relationships
+- Activity Diagrams: Show workflow with proper decision points and parallel activities
+- Component Diagrams: Show system components and their interfaces
 
 Business Requirements:
 {requirements}
 
-You must respond with ONLY a valid JSON object using the following structure (replace the placeholder values with actual content):
+You must respond with ONLY a valid JSON object using the following structure:
 
 RESPONSE FORMAT:
 {{
@@ -46,7 +169,9 @@ RESPONSE FORMAT:
   "umlDiagrams": [
     {{
       "name": "<diagram name>",
-      "content": "<detailed diagram description>"
+      "type": "<diagram type: usecase|sequence|class|activity|component>",
+      "description": "<text description of what the diagram shows>",
+      "content": "<PlantUML code for the diagram>"
     }}
   ]
 }}
@@ -56,7 +181,9 @@ Important:
 2. Ensure all strings are properly escaped
 3. Use double quotes for all keys and string values
 4. Make the response a single, valid JSON object
-5. Replace all placeholder text (including < and > characters) with actual content
+5. For UML diagrams, provide valid PlantUML code that can be rendered
+6. Include proper PlantUML syntax with @startuml and @enduml tags
+7. Follow PlantUML best practices for each diagram type
 `);
 
 // Helper function to repair common JSON issues
@@ -185,12 +312,20 @@ app.post('/api/generate-documents', async (req, res) => {
       // Parse the JSON response
       const result = JSON.parse(completion);
       
+      // Process UML diagrams
+      if (result.umlDiagrams && Array.isArray(result.umlDiagrams)) {
+        result.umlDiagrams = result.umlDiagrams.map(diagram => ({
+          ...diagram,
+          content: diagram.content || generatePlantUMLCode(diagram.description, diagram.type)
+        }));
+      }
+      
       // Validate the response structure
       if (!result.srs || !result.frd || !result.brd || !Array.isArray(result.umlDiagrams)) {
         throw new Error('Invalid response structure from AI');
       }
       
-      console.log('Parsed result:', result);
+      console.log('Processed UML diagrams:', result.umlDiagrams);
       res.json(result);
     } catch (parseError) {
       console.error('Error parsing JSON response:', parseError);
